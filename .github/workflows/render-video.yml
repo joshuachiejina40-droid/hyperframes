@@ -1,32 +1,44 @@
 name: Render Marketing Video
 
 on:
-  workflow_dispatch: # This lets you trigger the workflow manually from the GitHub UI
+  workflow_dispatch:
 
 jobs:
   build-and-render:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
       - name: Install Dependencies
-        run: npm install
+        run: bun install --frozen-lockfile
 
       - name: Render the Video
-        # This command looks for your index.html file and renders it
-        run: npx hyperframes render --composition index.html --output marketing-video.mp4
+        run: bunx hyperframes render --composition index.html --output marketing-video.mp4
 
       - name: Upload Video Artifact
         uses: actions/upload-artifact@v4
         with:
           name: final-video
           path: marketing-video.mp4
+
+
+      - name: Install Dependencies
+        run: bun install
+        run: bun install --frozen-lockfile
