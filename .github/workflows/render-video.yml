@@ -37,8 +37,5 @@ jobs:
         with:
           name: final-video
           path: marketing-video.mp4
-
-
       - name: Install Dependencies
         run: bun install
-        run: bun install --frozen-lockfile
