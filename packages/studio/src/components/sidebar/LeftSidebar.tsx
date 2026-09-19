@@ -3,6 +3,7 @@ import {
   useState,
   useCallback,
   useImperativeHandle,
+  useMemo,
   useRef,
   forwardRef,
   type ReactNode,
@@ -11,6 +12,7 @@ import { CompositionsTab } from "./CompositionsTab";
 import { AssetsTab } from "./AssetsTab";
 import { trackStudioEvent } from "../../utils/studioTelemetry";
 import { safeLocalStorage } from "../../utils/safeStorage";
+import { resolveMasterCompositionPath } from "../../utils/studioUrlState";
 import { BlocksTab, type BlockPreviewInfo } from "./BlocksTab";
 import { FileTree } from "../editor/FileTree";
 import { Tooltip } from "../ui";
@@ -72,6 +74,7 @@ interface LeftSidebarProps {
   onLint?: () => void;
   linting?: boolean;
   lintFindingCount?: number;
+  lintHasError?: boolean;
   lintFindingsByFile?: Map<string, { count: number; messages: string[] }>;
   onToggleCollapse?: () => void;
   onAddBlock?: (blockName: string) => void | Promise<void>;
@@ -106,6 +109,7 @@ export const LeftSidebar = memo(
       onLint,
       linting,
       lintFindingCount,
+      lintHasError,
       lintFindingsByFile,
       onToggleCollapse,
       onAddBlock,
@@ -120,6 +124,10 @@ export const LeftSidebar = memo(
     const tabRef = useRef(tab);
     tabRef.current = tab;
     const tablistRef = useRef<HTMLDivElement>(null);
+    const masterCompositionPath = useMemo(
+      () => resolveMasterCompositionPath(compositions),
+      [compositions],
+    );
 
     const selectTab = useCallback((t: SidebarTab) => {
       setTab(t);
@@ -159,7 +167,7 @@ export const LeftSidebar = memo(
         ) : (
           <>
             {/* Tabs — Code first */}
-            <div className="border-b border-neutral-800/50 px-3 py-3 flex-shrink-0">
+            <div className="border-b border-neutral-800/50 px-3 py-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div
                   ref={tablistRef}
@@ -194,7 +202,7 @@ export const LeftSidebar = memo(
                   <button
                     type="button"
                     onClick={onToggleCollapse}
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-transparent text-neutral-500 transition-colors hover:border-neutral-800 hover:bg-neutral-900 hover:text-neutral-300"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-neutral-500 transition-colors hover:border-neutral-800 hover:bg-neutral-900 hover:text-neutral-300"
                     title="Hide sidebar"
                     aria-label="Hide sidebar"
                   >
@@ -228,6 +236,7 @@ export const LeftSidebar = memo(
                   projectId={projectId}
                   compositions={compositions}
                   activeComposition={activeComposition}
+                  masterCompositionPath={masterCompositionPath}
                   onSelect={onSelectComposition}
                   onAddToTimeline={onAddCompositionToTimeline}
                   onRenderComposition={onRenderComposition}
@@ -255,7 +264,7 @@ export const LeftSidebar = memo(
             {tab === "code" && (
               <div id="sidebar-panel-code" role="tabpanel" className="flex flex-1 min-h-0">
                 {(fileProp?.length ?? 0) > 0 && (
-                  <div className="w-[160px] flex-shrink-0 border-r border-neutral-800 overflow-y-auto">
+                  <div className="w-[160px] shrink-0 border-r border-neutral-800 overflow-y-auto">
                     <FileTree
                       files={fileProp ?? []}
                       activeFile={editingFile?.path ?? null}
@@ -293,7 +302,7 @@ export const LeftSidebar = memo(
 
             {/* Lint button pinned at the bottom */}
             {onLint && (
-              <div className="border-t border-neutral-800 p-2 flex-shrink-0">
+              <div className="border-t border-neutral-800 p-2 shrink-0">
                 <button
                   onClick={onLint}
                   disabled={linting}
@@ -312,8 +321,20 @@ export const LeftSidebar = memo(
                   </svg>
                   {linting ? "Linting…" : "Lint"}
                   {!linting && lintFindingCount != null && lintFindingCount > 0 && (
-                    <span className="ml-1 min-w-[16px] rounded-full bg-amber-500/20 px-1 text-[9px] font-bold text-amber-400">
+                    <span
+                      data-lint-badge={lintHasError ? "error" : "warning"}
+                      className={
+                        lintHasError
+                          ? "ml-1 min-w-[16px] rounded-full bg-panel-danger/25 px-1 text-[9px] font-bold text-panel-danger animate-pulse motion-reduce:animate-none"
+                          : "ml-1 min-w-[16px] rounded-full bg-amber-500/20 px-1 text-[9px] font-bold text-amber-400"
+                      }
+                    >
                       {lintFindingCount}
+                      <span className="sr-only">
+                        {lintHasError
+                          ? " lint findings, including errors"
+                          : " lint findings, warnings only"}
+                      </span>
                     </span>
                   )}
                 </button>

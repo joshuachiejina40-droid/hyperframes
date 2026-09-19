@@ -6,6 +6,7 @@ import { CompositionBreadcrumb } from "./CompositionBreadcrumb";
 import { usePreviewBlockDrop } from "./usePreviewBlockDrop";
 import { useNLEContext } from "./NLEContext";
 import { AssetPreviewOverlay } from "./AssetPreviewOverlay";
+import { PreviewGuides } from "../editor/PreviewGuides";
 
 function subscribeFullscreen(cb: () => void) {
   document.addEventListener("fullscreenchange", cb);
@@ -138,15 +139,16 @@ export function PreviewPane({
             onCompositionSizeChange={setPreviewCompositionSize}
           />
           {previewDragOver && (
-            <div className="absolute inset-2 z-40 rounded-lg border-2 border-dashed border-studio-accent/50 bg-studio-accent/[0.04] pointer-events-none" />
+            <div className="absolute inset-2 z-40 rounded-lg border-2 border-dashed border-studio-accent/50 bg-studio-accent/4 pointer-events-none" />
           )}
           <AssetPreviewOverlay />
         </div>
+        <PreviewGuides iframeRef={iframeRef} />
         {!isFullscreen && previewOverlay}
       </div>
       {/* Transport row: no own background or border — the controls sit flat on
           the preview panel's surface (CapCut-style). */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         {!isFullscreen && compositionStack.length > 1 && (
           <CompositionBreadcrumb stack={compositionStack} onNavigate={handleNavigateComposition} />
         )}
